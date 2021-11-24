@@ -1,5 +1,4 @@
 import assert from 'assert';
-import commandLineArgs from 'command-line-args';
 import path from 'path';
 import readline from 'readline';
 import eachSeries from 'p-each-series';
@@ -8,8 +7,9 @@ import { dirname } from 'dirname-filename-esm';
 
 import { mockCwd } from 'mock-cwd';
 
-import { optionList } from '../command-line-options.js'; // eslint-disable-line import/extensions
-import { run } from '../postgrator-cli.js'; // eslint-disable-line import/extensions
+import getClient from '../lib/clients/index.js'; // eslint-disable-line import/extensions
+import { parse } from '../lib/command-line-options.js'; // eslint-disable-line import/extensions
+import { run } from '../lib/postgrator-cli.js'; // eslint-disable-line import/extensions
 
 const __dirname = dirname(import.meta); // eslint-disable-line no-underscore-dangle
 
@@ -26,7 +26,7 @@ function consoleLogCapture(...args) {
 
 async function removeVersionTable(options) {
     const config = {
-        migrationDirectory: options['migration-directory'],
+        migrationPattern: options['migration-pattern'],
         driver: options.driver,
         host: options.host,
         port: options.port,
@@ -35,17 +35,22 @@ async function removeVersionTable(options) {
         password: options.password,
     };
     console.log(`\n----- ${config.driver} removing tables -----`);
-    const Postgrator = (await import('postgrator')).default;
-    const pg = new Postgrator(config);
+    const { default: Postgrator } = await import('postgrator');
+    const client = await getClient(config.driver, config);
+    await client.connect();
+    const pg = new Postgrator({
+        ...config,
+        execQuery: client.query,
+    });
 
-    return pg.runQuery('DROP TABLE IF EXISTS schemaversion, animal, person').catch((err) => {
+    return pg.runQuery('DROP TABLE IF EXISTS schemaversion, animal, person').then(() => client.end()).catch((err) => {
         assert.ifError(err);
         return Promise.reject(err);
     });
 }
 
 function getDefaultOptions() {
-    return commandLineArgs(optionList, { partial: true });
+    return parse({ partial: true });
 }
 
 /* Build a set of tests for a given config.
@@ -178,7 +183,7 @@ function buildTestsForOptions(options) {
     tests.push(async () => {
         console.log('\n----- testing with no migration files found-----');
         options.to = 3;
-        options['migration-directory'] = 'test/empty-migrations';
+        options['migration-pattern'] = 'test/empty-migrations/*';
 
         console.log = consoleLogCapture;
         try {
@@ -192,46 +197,11 @@ function buildTestsForOptions(options) {
         }
     });
 
-    tests.push(async () => {
-        console.log('\n----- testing with non-existing migration directory set-----');
-        options.to = 3;
-        options['migration-directory'] = 'test/non-existing-directory';
-
-        console.log = consoleLogCapture;
-        try {
-            await run(options);
-        } catch (err) {
-            console.log = originalConsoleLog;
-            restoreOptions();
-            assert(err.message.indexOf('does not exist') >= 0);
-            assert(log.indexOf('Examples') < 0, "Help was displayed when shouldn't");
-        }
-    });
-
-    tests.push(() => {
-        console.log('\n----- testing with non-existing migration directory set in config file-----');
-        options.username = '';
-        options.database = '';
-
-        console.log = consoleLogCapture;
-        return mockCwd(path.join(__dirname, 'config-with-non-existing-directory'), async () => {
-            try {
-                await run(options);
-            } catch (err) {
-                console.log = originalConsoleLog;
-                restoreOptions();
-                assert(err.message.indexOf('non-existing-migrations-directory') >= 0);
-                assert(err.message.indexOf('does not exist') >= 0);
-                assert(log.indexOf('Examples') < 0, "Help was displayed when shouldn't");
-            }
-        });
-    });
-
     tests.push(resetMigrations);
 
     tests.push(() => {
         console.log('\n----- testing ignoring config file -----');
-        options['migration-directory'] = '../migrations';
+        options['migration-pattern'] = '../migrations/*';
         options['no-config'] = true;
         options.to = 'max';
 
@@ -265,7 +235,7 @@ function buildTestsForOptions(options) {
 
         run(options);
         // this error is not thrown down the chain so it cannot be caught
-        const err = await fromEvent(process, 'uncaughtException');
+        const err = await fromEvent(process, 'unhandledRejection');
         assert(err, 'ERR_INVALID_ARG_TYPE');
         restoreOptions();
     });
@@ -322,26 +292,48 @@ function buildTestsForOptions(options) {
     });
 
     tests.push(() => {
-        console.log('\n----- testing showing help and error without any cmd params if no migrations directory-----');
-        const defaultOptions = getDefaultOptions();
-
-        console.log = consoleLogCapture;
-        return run(defaultOptions).catch((err) => {
-            console.log = originalConsoleLog;
-            restoreOptions();
-            assert.ok(log.indexOf('Examples') >= 0, 'No help was displayed');
-            assert(err.message.indexOf('does not exist') >= 0, 'No directory does not exist error was displayed');
-        });
-    });
-
-    tests.push(() => {
         console.log('\n----- testing detecting migration files with same number-----');
         options.to = 3;
-        options['migration-directory'] = 'test/conflicting-migrations';
+        options['migration-pattern'] = 'test/conflicting-migrations/*';
 
         return run(options).catch((err) => {
             restoreOptions();
             assert(err.message.indexOf('Two migrations found with version 2 and action do') >= 0, 'No migration conflicts were detected');
+        });
+    });
+
+    tests.push(() => removeVersionTable({
+        ...options,
+        driver: 'mysql',
+        port: 3306,
+    }));
+
+    tests.push(async () => {
+        console.log('\n----- testing migration to 003 using mysql -----');
+
+        return mockCwd(path.join(__dirname, 'mysql-config'), async () => {
+            const migrations = await run(options);
+            assert.equal(migrations.length, 3);
+            assert.equal(migrations[2].version, 3);
+        });
+    });
+
+    tests.push(() => removeVersionTable({
+        ...options,
+        driver: 'mssql',
+        port: 1433,
+        database: 'master',
+        username: 'sa',
+        password: 'Postgrator123!',
+    }));
+
+    tests.push(async () => {
+        console.log('\n----- testing migration to 003 using mssql -----');
+
+        return mockCwd(path.join(__dirname, 'mssql-config'), async () => {
+            const migrations = await run(options);
+            assert.equal(migrations.length, 3);
+            assert.equal(migrations[2].version, 3);
         });
     });
 }
@@ -354,7 +346,9 @@ const options = {
     database: 'postgrator',
     username: 'postgrator',
     password: 'postgrator',
-    'migration-directory': 'test/migrations',
+    'migration-pattern': 'test/migrations/*',
+    'schema-table': 'schemaversion',
+    'validate-checksum': true,
 };
 
 // Command line parameters
