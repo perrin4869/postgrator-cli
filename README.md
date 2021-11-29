@@ -157,17 +157,17 @@ Examples
 ## Tests
 To run postgrator tests locally, run `docker-compose up` and then `npm test`.
 
-[build-badge]: https://img.shields.io/github/workflow/status/MattiLehtinen/postgrator-cli/test/master?style=flat-square
-[build]: https://github.com/MattiLehtinen/postgrator-cli/actions
+[build-badge]: https://img.shields.io/github/workflow/status/perrin4869/postgrator-cli/test/master?style=flat-square
+[build]: https://github.com/perrin4869/postgrator-cli/actions
 
-[npm-badge]: https://img.shields.io/npm/v/postgrator-cli.svg?style=flat-square
-[npm]: https://www.npmjs.org/package/postgrator-cli
+[npm-badge]: https://img.shields.io/npm/v/@perrin4869/postgrator-cli.svg?style=flat-square
+[npm]: https://www.npmjs.org/package/@perrin4869/postgrator-cli
 
-[coveralls-badge]: https://img.shields.io/coveralls/MattiLehtinen/postgrator-cli/master.svg?style=flat-square
-[coveralls]: https://coveralls.io/r/MattiLehtinen/postgrator-cli
+[coveralls-badge]: https://img.shields.io/coveralls/perrin4869/postgrator-cli/master.svg?style=flat-square
+[coveralls]: https://coveralls.io/r/perrin4869/postgrator-cli
 
-[dependency-status-badge]: https://david-dm.org/MattiLehtinen/postgrator-cli.svg?style=flat-square
-[dependency-status]: https://david-dm.org/MattiLehtinen/postgrator-cli
+[dependency-status-badge]: https://david-dm.org/perrin4869/postgrator-cli.svg?style=flat-square
+[dependency-status]: https://david-dm.org/perrin4869/postgrator-cli
 
-[dev-dependency-status-badge]: https://david-dm.org/MattiLehtinen/postgrator-cli/dev-status.svg?style=flat-square
-[dev-dependency-status]: https://david-dm.org/MattiLehtinen/postgrator-cli#info=devDependencies
+[dev-dependency-status-badge]: https://david-dm.org/perrin4869/postgrator-cli/dev-status.svg?style=flat-square
+[dev-dependency-status]: https://david-dm.org/perrin4869/postgrator-cli#info=devDependencies
