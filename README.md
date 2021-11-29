@@ -1,5 +1,11 @@
 # Postgrator CLI
 
+[![Build Status][build-badge]][build]
+[![npm package][npm-badge]][npm]
+[![Coverage Status][coveralls-badge]][coveralls]
+[![Dependency Status][dependency-status-badge]][dependency-status]
+[![devDependency Status][dev-dependency-status-badge]][dev-dependency-status]
+
 Command line SQL database migration tool using SQL scripts. For PostgreSQL, MySQL and SQL Server.
 
 Version control your SQL database using plain old SQL files.
@@ -92,7 +98,7 @@ You can specify all the parameters from command line (see below) but the easiest
 
 ```
 {
-    "migrationDirectory": "migrations",
+    "migrationPattern": "migrations/*",
     "driver": "pg",
     "host": "127.0.0.1",
     "port": 5432,
@@ -123,16 +129,17 @@ postgrator [[--to=]<version>] --database=<db> [--driver=<driver>] [--host=<host>
 
 ```
   --to version                          Version number of the file to migrate to or 'max'. Default: 'max'
-  -r, --driver pg|mysql|mssql           Database driver. Default: 'pg'
-  -h, --host hostname                   Host. Default: '127.0.0.1'
-  -o, --port port                       Host. Default: '5432'
-  -d, --database database               Database name
-  -u, --username database               Username
-  -p, --password password               Password
-  -m, --migration-directory directory   A directory to run migration files from. Default: 'migrations''
+  -r, --driver pg|mysql|mssql           Database driver. Default: 'pg'.
+  -h, --host hostname                   Host.
+  -o, --port port                       Port.
+  -d, --database database               Database name.
+  -u, --username database               Username.
+  -p, --password password               Password. If parameter without value is given, password will be asked.
+  -m, --migration-pattern pattern       A pattern matching files to run migration files from. Default: 'migrations/*'
   -t --schema-table                     Table created to track schema version.
-  -c --validate-checksum                Validates checksum of existing SQL migration files already run prior to executing migrations.
+  --validate-checksum                   Validates checksum of existing SQL migration files already run prior to executing migrations.
   -s, --ssl                             Enables ssl connections. When using the mysql driver it expects a string containing name of ssl profile.
+  -c, --config                          Explicitly set the location of the config file to load.
   --no-config                           Do not load options from a configuration file.
   -v, --version                         Print version.
   -?, --help                            Print this usage guide.
@@ -148,7 +155,19 @@ Examples
 ```
 
 ## Tests
-To run postgrator tests locally, you'll need:
-- A [postgreSQL](http://www.postgresql.org/download/) instance running on default port (5432), with a `postgrator` (password `postgrator`) account and a `postgrator` database
+To run postgrator tests locally, run `docker-compose up` and then `npm test`.
 
-then run `npm test`
+[build-badge]: https://img.shields.io/github/workflow/status/MattiLehtinen/postgrator-cli/test/master?style=flat-square
+[build]: https://github.com/MattiLehtinen/postgrator-cli/actions
+
+[npm-badge]: https://img.shields.io/npm/v/postgrator-cli.svg?style=flat-square
+[npm]: https://www.npmjs.org/package/postgrator-cli
+
+[coveralls-badge]: https://img.shields.io/coveralls/MattiLehtinen/postgrator-cli/master.svg?style=flat-square
+[coveralls]: https://coveralls.io/r/MattiLehtinen/postgrator-cli
+
+[dependency-status-badge]: https://david-dm.org/MattiLehtinen/postgrator-cli.svg?style=flat-square
+[dependency-status]: https://david-dm.org/MattiLehtinen/postgrator-cli
+
+[dev-dependency-status-badge]: https://david-dm.org/MattiLehtinen/postgrator-cli/dev-status.svg?style=flat-square
+[dev-dependency-status]: https://david-dm.org/MattiLehtinen/postgrator-cli#info=devDependencies
