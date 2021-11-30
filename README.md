@@ -123,6 +123,12 @@ $ postgrator 4
 
 ```
 postgrator [[--to=]<version>] --database=<db> [--driver=<driver>] [--host=<host>] [--port=<port>] [--username=<username>] [--password=<password>] [--no-config]
+
+postgrator [[--to=]<version>] [--config=<config>]
+
+postgrator migrate [[--to=]version]
+
+postgrator drop-schema [--config=<config>]
 ```
 
 ### Options
@@ -139,7 +145,7 @@ postgrator [[--to=]<version>] --database=<db> [--driver=<driver>] [--host=<host>
   -t --schema-table                     Table created to track schema version.
   --validate-checksum                   Validates checksum of existing SQL migration files already run prior to executing migrations.
   -s, --ssl                             Enables ssl connections. When using the mysql driver it expects a string containing name of ssl profile.
-  -c, --config                          Explicitly set the location of the config file to load.
+  -c, --config file                     Explicitly set the location of the config file to load.
   --no-config                           Do not load options from a configuration file.
   -v, --version                         Print version.
   -?, --help                            Print this usage guide.
@@ -152,6 +158,7 @@ Examples
   3. Use default configuration file to migrate to version 5   postgrator 5
   4. Migrate to latest version using default configuration    postgrator
   file (.postgratorrc.json, etc)
+  5. Drop the schema table using configuration files          postgrator drop-schema
 ```
 
 ## Tests
